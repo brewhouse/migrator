@@ -5,19 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Migrator</title>
     <link rel="stylesheet" href="https://adachecker.planeteria.com/css/app.css">
+    <link rel="icon" href="https://adachecker.planeteria.com/favicon.ico">
     <style>
-        /* Additional custom styles for branding */
-        body { background: #f7f7f7; }
-        .container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 2rem; }
-        h1 { color: #1a2a3a; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { font-weight: 600; }
-        .btn-primary { background: #1a2a3a; color: #fff; border: none; padding: 0.75rem 2rem; border-radius: 4px; }
-        .btn-primary:hover { background: #2d3e50; }
+        .planeteria-logo {
+            display: block;
+            margin: 0 auto 1.5rem auto;
+            width: 180px;
+        }
+        .progress-log {
+            background: #f3f6fa;
+            border: 1px solid #dbe6f1;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 2rem;
+            min-height: 60px;
+            font-family: monospace;
+            font-size: 1rem;
+            color: #1a2a3a;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <img src="https://adachecker.planeteria.com/images/planeteria-logo.svg" alt="Planeteria" class="planeteria-logo">
         <h1>Website Content Migrator</h1>
         <form method="post" action="/">
             <div class="form-group">
@@ -52,6 +62,25 @@
             </div>
             <button type="submit" class="btn btn-primary">Migrate</button>
         </form>
+        <div class="progress-log" id="progress-log">
+            {% if progress_log %}
+                {% for line in progress_log %}
+                    {{ line }}<br>
+                {% endfor %}
+            {% else %}
+                <span>Progress will appear here...</span>
+            {% endif %}
+        </div>
     </div>
+    <script>
+    // Poll progress every 2 seconds
+    setInterval(function() {
+        fetch('/progress').then(r => r.json()).then(data => {
+            let log = data.log || [];
+            let html = log.length ? log.map(l => l + '<br>').join('') : '<span>Progress will appear here...</span>';
+            document.getElementById('progress-log').innerHTML = html;
+        });
+    }, 2000);
+    </script>
 </body>
 </html>
