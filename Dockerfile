@@ -19,7 +19,7 @@ COPY . /app/
 EXPOSE 10000
 
 # Set environment variables for Flask
-ENV FLASK_APP=src/app.py
+ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 
 # Run the application
