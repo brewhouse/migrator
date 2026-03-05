@@ -16,16 +16,40 @@ def extract_main_content(html):
         tag.decompose()
     # Try to find main content
     main = soup.find('main')
+    content = None
     if main:
-        return str(main)
-    # Fallback: largest <div> by text length
-    divs = soup.find_all('div')
-    if divs:
-        main_div = max(divs, key=lambda d: len(d.get_text(strip=True)))
-        return str(main_div)
-    # Fallback: body
-    body = soup.find('body')
-    return str(body) if body else html
+        content = main
+    else:
+        # Fallback: largest <div> by text length
+        divs = soup.find_all('div')
+        if divs:
+            main_div = max(divs, key=lambda d: len(d.get_text(strip=True)))
+            content = main_div
+        else:
+            body = soup.find('body')
+            content = body if body else soup
+
+    # Remove all <div> tags but keep their content
+    for div in content.find_all('div'):
+        div.unwrap()
+
+    # Convert paragraphs and headings to Kadence blocks
+    kadence_blocks = []
+    for el in content.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'img']):
+        if el.name.startswith('h'):
+            kadence_blocks.append(f'<!-- wp:kadence/advancedheading --><{el.name}>{el.get_text(strip=True)}</{el.name}><!-- /wp:kadence/advancedheading -->')
+        elif el.name == 'p':
+            kadence_blocks.append(f'<!-- wp:kadence/paragraph --><p>{el.get_text(strip=True)}</p><!-- /wp:kadence/paragraph -->')
+        elif el.name in ['ul', 'ol']:
+            kadence_blocks.append(f'<!-- wp:list --><{el.name}>{el.decode_contents()}</{el.name}><!-- /wp:list -->')
+        elif el.name == 'li':
+            continue  # handled by parent ul/ol
+        elif el.name == 'img':
+            src = el.get('src', '')
+            alt = el.get('alt', '')
+            kadence_blocks.append(f'<!-- wp:image --><figure class="wp-block-image"><img src="{src}" alt="{alt}"/></figure><!-- /wp:image -->')
+
+    return '\n'.join(kadence_blocks)
 
 def extract_hero_image(html, base_url):
     soup = BeautifulSoup(html, 'html.parser')
