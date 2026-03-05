@@ -32,9 +32,10 @@ def migrate_content(form):
         migrate_type = form['migrate_type']
         featured_image = 'featured_image' in form
         gravity_version = form.get('gravity_version', '2.7')
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
         for url in source_urls:
             log_progress(f'Fetching {url}...')
-            resp = requests.get(url)
+            resp = requests.get(url, headers=headers)
             resp.raise_for_status()
             html = resp.text
             main_content = extract_main_content(html)
@@ -46,7 +47,7 @@ def migrate_content(form):
             media_ids = {}
             for m_url in media_links:
                 log_progress(f'Downloading media: {m_url}')
-                m_resp = requests.get(m_url)
+                m_resp = requests.get(m_url, headers=headers)
                 if m_resp.status_code == 200:
                     ext = os.path.splitext(m_url)[-1]
                     mime = mimetypes.guess_type(m_url)[0] or 'application/octet-stream'
