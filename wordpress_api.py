@@ -17,8 +17,9 @@ def create_wordpress_post(site_url, username, password, title, content, post_typ
 def upload_media(site_url, username, password, file_path, mime_type):
     api_url = f"{site_url.rstrip('/')}/wp-json/wp/v2/media"
     with open(file_path, 'rb') as f:
+        filename = file_path.split('/')[-1]
         headers = {
-            'Content-Disposition': f'attachment; filename={file_path.split('/')[-1]}',
+            'Content-Disposition': f'attachment; filename={filename}',
             'Content-Type': mime_type
         }
         resp = requests.post(api_url, headers=headers, data=f, auth=HTTPBasicAuth(username, password))
