@@ -2,7 +2,9 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 def create_wordpress_post(site_url, username, password, title, content, post_type='page', featured_image_id=None):
-    api_url = f"{site_url.rstrip('/')}/wp-json/wp/v2/{post_type}s"
+    # Ensure /wp-admin/ is not in the site_url
+    clean_url = site_url.replace('/wp-admin', '').rstrip('/')
+    api_url = f"{clean_url}/wp-json/wp/v2/{post_type}s"
     data = {
         'title': title,
         'content': content,
@@ -15,7 +17,8 @@ def create_wordpress_post(site_url, username, password, title, content, post_typ
     return resp.json()
 
 def upload_media(site_url, username, password, file_path, mime_type):
-    api_url = f"{site_url.rstrip('/')}/wp-json/wp/v2/media"
+    clean_url = site_url.replace('/wp-admin', '').rstrip('/')
+    api_url = f"{clean_url}/wp-json/wp/v2/media"
     with open(file_path, 'rb') as f:
         filename = file_path.split('/')[-1]
         headers = {
