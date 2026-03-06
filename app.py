@@ -76,21 +76,41 @@ def migrate_content(form):
             elif filename.lower().endswith('.pdf'):
                 html = extract_pdf_content(temp_path)
                 filetype = 'PDF document'
-            else:
-                log_progress('Unsupported file type uploaded.')
-                return
-            from extract import extract_main_content
-            page_title, main_content = extract_main_content(html)
-            main_content_clean = main_content
-            title = page_title or filename
-            wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content_clean, migrate_type, None)
-            log_progress(f'Created {migrate_type} from {filetype}: {wp_post.get("link") or "(no link)"}')
 
-        # --- Handle URL migration ---
+            import os
+            import requests
+            import re
+            from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash
+            from werkzeug.utils import secure_filename
+            from docx_extract import extract_docx_content
+            from pdf_extract import extract_pdf_content
+
+            from extract import extract_main_content, extract_hero_image, extract_forms
+            from wordpress_api import create_wordpress_post, upload_media
+            from gravity_form import gravity_form_to_json
+            import tempfile
+            import mimetypes
+            import threading
+            import time
+
+            app = Flask(__name__)
+            app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'changeme')
+
+            # In-memory progress log (per session)
+            progress_log = []
+
         for url in source_urls:
             log_progress(f'Fetching {url}...')
             try:
                 resp = requests.get(url, headers=headers, timeout=30)
+
+            # Download Gravity Forms JSON route (must be after app is defined)
+            @app.route('/download-form-json')
+            def download_form_json():
+                path = request.args.get('path')
+                if not path or not os.path.exists(path):
+                    return 'File not found', 404
+                return send_file(path, as_attachment=True, download_name=os.path.basename(path), mimetype='application/json')
                 resp.raise_for_status()
             except Exception as e:
                 log_progress(f'Error fetching {url}: {str(e)}')
