@@ -67,10 +67,8 @@ def migrate_content(form):
                     body = soup.find('body')
                     content = body if body else soup
             # Remove all <div> tags but keep their content
+            for div in content.find_all('div'):
                 div.unwrap()
-            # Now extract blocks and media from this content only
-                    log_progress('Migration complete!')
-                    log_progress(f'Error: {str(e)}')
             from extract import extract_main_content, extract_media_links_from_content
             page_title, main_content = extract_main_content(str(content))
             log_progress('Extracted main content.')
