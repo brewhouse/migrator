@@ -241,3 +241,6 @@ def migrate_content(form):
                     title = page_title or (url.split('//')[-1].split('/')[1] if '/' in url.split('//')[-1] else url)
                     wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content_clean, migrate_type, featured_id)
                     log_progress(f'Created {migrate_type}: {wp_post.get("link") or "(no link)"}')
+        log_progress('Migration complete!')
+    except Exception as e:
+        log_progress(f'Error: {str(e)}')
