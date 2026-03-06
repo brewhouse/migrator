@@ -46,9 +46,9 @@ def migrate_content(form):
             # Remove header/footer/nav as in extract_main_content
             for tag in soup(['header', 'footer', 'nav', 'aside', 'menu']):
                 tag.decompose()
-            for tag in soup.find_all(['div', 'section'], class_=re.compile(r'(side|nav|menu|left)', re.I)):
+            for tag in soup.find_all(['div', 'section'], class_=re.compile(r'(side|nav|menu|left|breadcrumb)', re.I)):
                 tag.decompose()
-            for tag in soup.find_all(['div', 'section'], id=re.compile(r'(side|nav|menu|left)', re.I)):
+            for tag in soup.find_all(['div', 'section'], id=re.compile(r'(side|nav|menu|left|breadcrumb)', re.I)):
                 tag.decompose()
             main = soup.find('main')
             content = None
@@ -111,6 +111,16 @@ def migrate_content(form):
                             break
                     # Remove class and style from <a>
                     a.attrs = {k: v for k, v in a.attrs.items() if k not in ['class', 'style']}
+            # Fix <p> and <a> structure: if a <p> only contains an <a>, keep them together
+            for p in soup_content.find_all('p'):
+                children = list(p.children)
+                if len(children) == 1 and children[0].name == 'a':
+                    continue  # already correct
+                # If <a> was moved outside <p>, move it back in
+                if not any(child.name == 'a' for child in children):
+                    next_sibling = p.find_next_sibling('a')
+                    if next_sibling and next_sibling.previous_sibling == p:
+                        p.append(next_sibling.extract())
             # Remove inline styles from all tags
             for tag in soup_content.find_all(True):
                 if 'style' in tag.attrs:
@@ -128,7 +138,10 @@ def migrate_content(form):
                 gf_json = gravity_form_to_json(forms[0]['fields'], gravity_version)
                 with open('gravity_form.json', 'w') as f:
                     f.write(gf_json)
-                log_progress('Gravity Forms JSON created and available for download.')
+                log_progress('Gravity Forms JSON created and available for download. <a href="/download-gravity-form" target="_blank">Download here</a>')
+        @app.route('/download-gravity-form')
+        def download_gravity_form():
+            return send_file('gravity_form.json', as_attachment=True)
         log_progress('Migration complete!')
     except Exception as e:
         log_progress(f'Error: {str(e)}')
