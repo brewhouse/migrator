@@ -40,22 +40,30 @@ def extract_main_content(html):
     for div in content.find_all('div'):
         div.unwrap()
 
+    # Remove class attributes from all relevant tags
+    for tag in content.find_all(['p', 'span', 'ol', 'ul', 'li', 'table', 'th', 'td', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+        tag.attrs = {k: v for k, v in tag.attrs.items() if k not in ['class']}
+
     # Convert to WordPress core blocks
     wp_blocks = []
-    for el in content.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'img', 'figure', 'blockquote', 'hr']):
+    for el in content.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'img', 'figure', 'blockquote', 'hr']):
         if el.name.startswith('h'):
             level = el.name[1]
             wp_blocks.append(f'<!-- wp:heading {{"level":{level}}} --><{el.name}>{el.get_text(strip=True)}</{el.name}><!-- /wp:heading -->')
         elif el.name == 'p':
-            wp_blocks.append(f'<!-- wp:paragraph --><p>{el.get_text(strip=True)}</p><!-- /wp:paragraph -->')
+            # Avoid <p> inside <li>
+            if el.find_parent('li') is None:
+                wp_blocks.append(f'<!-- wp:paragraph --><p>{el.get_text(strip=True)}</p><!-- /wp:paragraph -->')
         elif el.name in ['ul', 'ol']:
+            # Remove <p> tags inside <li>
+            for li in el.find_all('li'):
+                for p in li.find_all('p'):
+                    p.unwrap()
             wp_blocks.append(f'<!-- wp:list --><{el.name}>{el.decode_contents()}</{el.name}><!-- /wp:list -->')
-        elif el.name == 'li':
-            continue  # handled by parent ul/ol
         elif el.name == 'img':
             src = el.get('src', '')
             alt = el.get('alt', '')
-            wp_blocks.append(f'<!-- wp:image --><figure class="wp-block-image"><img src="{src}" alt="{alt}"/></figure><!-- /wp:image -->')
+            wp_blocks.append(f'<!-- wp:image --><figure><img src="{src}" alt="{alt}"/></figure><!-- /wp:image -->')
         elif el.name == 'figure':
             wp_blocks.append(f'<!-- wp:image -->{el.decode_contents()}<!-- /wp:image -->')
         elif el.name == 'blockquote':
