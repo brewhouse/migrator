@@ -26,6 +26,21 @@ def log_progress(msg):
     if len(progress_log) > 50:
         progress_log.pop(0)
 
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    global progress_log
+    if request.method == 'POST':
+        form = request.form.to_dict()
+        if 'upload_file' in request.files:
+            form['upload_file'] = request.files['upload_file']
+        thread = threading.Thread(target=migrate_content, args=(form,))
+        thread.start()
+        time.sleep(1)
+        return redirect(url_for('index'))
+    log = progress_log.copy()
+    progress_log = []
+    return render_template('index.html', progress_log=log)
+
 def migrate_content(form):
     try:
         log_progress('Starting migration...')
