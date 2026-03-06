@@ -139,6 +139,8 @@ def migrate_content(form):
                 with open('gravity_form.json', 'w') as f:
                     f.write(gf_json)
                 log_progress('Gravity Forms JSON created and available for download. <a href="/download-gravity-form" target="_blank">Download here</a>')
+
+        # Place all route decorators before the first request is handled
         @app.route('/download-gravity-form')
         def download_gravity_form():
             return send_file('gravity_form.json', as_attachment=True)
