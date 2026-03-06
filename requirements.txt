@@ -3,3 +3,5 @@ requests
 beautifulsoup4
 python-dotenv
 # wordpress-rest-api (use REST API integration)
+python-docx
+PyMuPDF
