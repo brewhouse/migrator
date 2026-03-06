@@ -38,7 +38,7 @@ def migrate_content(form):
             resp = requests.get(url, headers=headers)
             resp.raise_for_status()
             html = resp.text
-            main_content = extract_main_content(html)
+            page_title, main_content = extract_main_content(html)
             log_progress('Extracted main content.')
             hero_img_url = extract_hero_image(html, url) if featured_image else None
             media_links = extract_media_links(html, url)
@@ -62,8 +62,8 @@ def migrate_content(form):
             if hero_img_url and hero_img_url in media_ids:
                 featured_id = media_ids[hero_img_url]
                 log_progress('Set featured image.')
-            # Create post/page
-            title = url.split('//')[-1].split('/')[1] if '/' in url.split('//')[-1] else url
+            # Create post/page with extracted title
+            title = page_title or (url.split('//')[-1].split('/')[1] if '/' in url.split('//')[-1] else url)
             wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content, migrate_type, featured_id)
             log_progress(f'Created {migrate_type}: {wp_post.get("link") or "(no link)"}')
             # Forms

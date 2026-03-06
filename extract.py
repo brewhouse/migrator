@@ -9,18 +9,25 @@ def extract_main_content(html):
     # Remove header, footer, nav, aside, menu, left navigation
     for tag in soup(['header', 'footer', 'nav', 'aside', 'menu']):
         tag.decompose()
-    # Remove left navigation by class/id
     for tag in soup.find_all(['div', 'section'], class_=re.compile(r'(side|nav|menu|left)', re.I)):
         tag.decompose()
     for tag in soup.find_all(['div', 'section'], id=re.compile(r'(side|nav|menu|left)', re.I)):
         tag.decompose()
+
+    # Extract page title from <title> or first <h1>
+    page_title = None
+    if soup.title and soup.title.string:
+        page_title = soup.title.string.strip()
+    h1 = soup.find('h1')
+    if h1 and h1.get_text(strip=True):
+        page_title = h1.get_text(strip=True)
+
     # Try to find main content
     main = soup.find('main')
     content = None
     if main:
         content = main
     else:
-        # Fallback: largest <div> by text length
         divs = soup.find_all('div')
         if divs:
             main_div = max(divs, key=lambda d: len(d.get_text(strip=True)))
@@ -33,23 +40,32 @@ def extract_main_content(html):
     for div in content.find_all('div'):
         div.unwrap()
 
-    # Convert paragraphs and headings to Kadence blocks
-    kadence_blocks = []
-    for el in content.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'img']):
+    # Convert to WordPress core blocks
+    wp_blocks = []
+    for el in content.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'img', 'figure', 'blockquote', 'hr']):
         if el.name.startswith('h'):
-            kadence_blocks.append(f'<!-- wp:kadence/advancedheading --><{el.name}>{el.get_text(strip=True)}</{el.name}><!-- /wp:kadence/advancedheading -->')
+            level = el.name[1]
+            wp_blocks.append(f'<!-- wp:heading {{"level":{level}}} --><{el.name}>{el.get_text(strip=True)}</{el.name}><!-- /wp:heading -->')
         elif el.name == 'p':
-            kadence_blocks.append(f'<!-- wp:kadence/paragraph --><p>{el.get_text(strip=True)}</p><!-- /wp:kadence/paragraph -->')
+            wp_blocks.append(f'<!-- wp:paragraph --><p>{el.get_text(strip=True)}</p><!-- /wp:paragraph -->')
         elif el.name in ['ul', 'ol']:
-            kadence_blocks.append(f'<!-- wp:list --><{el.name}>{el.decode_contents()}</{el.name}><!-- /wp:list -->')
+            wp_blocks.append(f'<!-- wp:list --><{el.name}>{el.decode_contents()}</{el.name}><!-- /wp:list -->')
         elif el.name == 'li':
             continue  # handled by parent ul/ol
         elif el.name == 'img':
             src = el.get('src', '')
             alt = el.get('alt', '')
-            kadence_blocks.append(f'<!-- wp:image --><figure class="wp-block-image"><img src="{src}" alt="{alt}"/></figure><!-- /wp:image -->')
+            wp_blocks.append(f'<!-- wp:image --><figure class="wp-block-image"><img src="{src}" alt="{alt}"/></figure><!-- /wp:image -->')
+        elif el.name == 'figure':
+            wp_blocks.append(f'<!-- wp:image -->{el.decode_contents()}<!-- /wp:image -->')
+        elif el.name == 'blockquote':
+            wp_blocks.append(f'<!-- wp:quote --><blockquote>{el.decode_contents()}</blockquote><!-- /wp:quote -->')
+        elif el.name == 'hr':
+            wp_blocks.append(f'<!-- wp:spacer --><hr /><!-- /wp:spacer -->')
 
-    return '\n'.join(kadence_blocks)
+    # TODO: Add support for media-text, columns, group, etc. if detected
+
+    return page_title, '\n'.join(wp_blocks)
 
 def extract_hero_image(html, base_url):
     soup = BeautifulSoup(html, 'html.parser')
