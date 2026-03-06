@@ -1,14 +1,4 @@
 
-# ...existing code...
-
-# Place this route after app = Flask(__name__)
-
-@app.route('/download-form-json')
-def download_form_json():
-    path = request.args.get('path')
-    if not path or not os.path.exists(path):
-        return 'File not found', 404
-    return send_file(path, as_attachment=True, download_name=os.path.basename(path), mimetype='application/json')
 
 import os
 import requests
