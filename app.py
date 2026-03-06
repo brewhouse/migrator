@@ -1,3 +1,9 @@
+@app.route('/download-form-json')
+def download_form_json():
+    path = request.args.get('path')
+    if not path or not os.path.exists(path):
+        return 'File not found', 404
+    return send_file(path, as_attachment=True, download_name=os.path.basename(path), mimetype='application/json')
 
 import os
 import requests
@@ -107,9 +113,20 @@ def migrate_content(form):
                     content = body if body else soup
             for div in content.find_all('div'):
                 div.unwrap()
-            from extract import extract_main_content, extract_media_links_from_content
+            from extract import extract_main_content, extract_media_links_from_content, extract_forms
             page_title, main_content = extract_main_content(str(content))
             log_progress('Extracted main content.')
+            # Gravity Forms export
+            forms = extract_forms(str(content))
+            if forms and len(forms) > 0:
+                from gravity_form import gravity_form_to_json
+                import json
+                gf_json = gravity_form_to_json(forms, gravity_version)
+                # Save to a temp file and provide a download link
+                temp_json_path = os.path.join(tempfile.gettempdir(), f'gravity_form_{int(time.time())}.json')
+                with open(temp_json_path, 'w') as f:
+                    f.write(gf_json)
+                log_progress(f'Gravity Form detected and exported. Download: /download-form-json?path={temp_json_path}')
             hero_img_url = extract_hero_image(html, url) if featured_image else None
             media_links = extract_media_links_from_content(content, url)
             log_progress(f'Found {len(media_links)} media files.')
