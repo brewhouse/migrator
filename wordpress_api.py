@@ -25,6 +25,12 @@ def upload_media(site_url, username, password, file_path, mime_type):
             'Content-Disposition': f'attachment; filename={filename}',
             'Content-Type': mime_type
         }
-        resp = requests.post(api_url, headers=headers, data=f, auth=HTTPBasicAuth(username, password))
+        resp = requests.post(
+            api_url,
+            headers=headers,
+            data=f,
+            auth=HTTPBasicAuth(username, password),
+            timeout=120
+        )
         resp.raise_for_status()
         return resp.json()
