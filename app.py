@@ -3,7 +3,7 @@ import os
 import requests
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash
 
-from extract import extract_main_content, extract_hero_image, extract_media_links, extract_forms
+from extract import extract_main_content, extract_hero_image, extract_forms
 from wordpress_api import create_wordpress_post, upload_media
 from gravity_form import gravity_form_to_json
 import tempfile
