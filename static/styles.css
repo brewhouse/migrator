@@ -850,3 +850,6 @@ a:hover { text-decoration: underline; }
   line-height: 1.5;
 }
 .exclude-sitemaps-textarea { margin-bottom: 0; }
+input[type="checkbox"] {
+  width: auto;
+}
