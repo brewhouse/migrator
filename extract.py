@@ -41,12 +41,12 @@ def extract_main_content(html):
         div.unwrap()
 
     # Remove class attributes from all relevant tags
-    for tag in content.find_all(['p', 'span', 'ol', 'ul', 'li', 'table', 'th', 'td', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+    for tag in content.find_all(['p', 'span', 'ol', 'ul', 'li', 'table', 'th', 'td', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a']):
         tag.attrs = {k: v for k, v in tag.attrs.items() if k not in ['class']}
 
     # Convert to WordPress core blocks
     wp_blocks = []
-    for el in content.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'img', 'figure', 'blockquote', 'hr']):
+    for el in content.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'img', 'figure', 'blockquote', 'hr', 'a']):
         if el.name.startswith('h'):
             level = el.name[1]
             wp_blocks.append(f'<!-- wp:heading {{"level":{level}}} --><{el.name}>{el.get_text(strip=True)}</{el.name}><!-- /wp:heading -->')
@@ -63,13 +63,16 @@ def extract_main_content(html):
         elif el.name == 'img':
             src = el.get('src', '')
             alt = el.get('alt', '')
-            wp_blocks.append(f'<!-- wp:image --><figure><img src="{src}" alt="{alt}"/></figure><!-- /wp:image -->')
+            wp_blocks.append(f'<!-- wp:image --><figure class="wp-block-image"><img src="{src}" alt="{alt}"/></figure><!-- /wp:image -->')
         elif el.name == 'figure':
-            wp_blocks.append(f'<!-- wp:image -->{el.decode_contents()}<!-- /wp:image -->')
+            wp_blocks.append(f'<!-- wp:image --><figure class="wp-block-image">{el.decode_contents()}</figure><!-- /wp:image -->')
         elif el.name == 'blockquote':
             wp_blocks.append(f'<!-- wp:quote --><blockquote>{el.decode_contents()}</blockquote><!-- /wp:quote -->')
         elif el.name == 'hr':
             wp_blocks.append(f'<!-- wp:spacer --><hr /><!-- /wp:spacer -->')
+        elif el.name == 'a':
+            # Retain <a> tags as-is (they will be handled in app.py for media links)
+            wp_blocks.append(str(el))
 
     # TODO: Add support for media-text, columns, group, etc. if detected
 
@@ -84,8 +87,16 @@ def extract_hero_image(html, base_url):
     if not img:
         # Fallback: first large image
         imgs = soup.find_all('img')
+        def safe_int(val):
+            try:
+                return int(val)
+            except Exception:
+                try:
+                    return int(str(val).replace('px','').strip())
+                except Exception:
+                    return 0
         if imgs:
-            imgs = sorted(imgs, key=lambda i: int(i.get('width', 0)) * int(i.get('height', 0)), reverse=True)
+            imgs = sorted(imgs, key=lambda i: safe_int(i.get('width', 0)) * safe_int(i.get('height', 0)), reverse=True)
             img = imgs[0]
     if img and img.get('src'):
         return urljoin(base_url, img['src'])
