@@ -27,41 +27,58 @@
 </head>
 <body>
     <div class="container">
-        <img src="https://www.planeteria.com/wp-content/uploads/2024/11/logo-1.svg" alt="Planeteria Logo" class="logo-img">
-        <h1>Website Content Migrator</h1>
+        <header class="site-header">
+      <div class="site-header-inner">
+        <a href="https://www.planeteria.com/" target="_blank" rel="noopener" class="site-header-logo">
+          <img src="https://www.planeteria.com/wp-content/uploads/2024/11/logo-1.svg" alt="Planeteria Logo" class="logo-img">
+        </a>
+      </div>
+    </header>
+    <div class="landing-container gradient_wrap">
+
+      <!-- Hero -->
+      <div class="landing-hero">
+        <div class="hero-rule"></div>
+        <h1 class="hero-title">Planeteria Website Content Migrator</h1>
+        <p class="hero-sub">Comprehensive WCAG accessibility auditing powered by Google Lighthouse</p>
+      </div>
+       
+      <div class="landing-card">
         <form method="post" action="/">
-            <div class="form-group">
+            <div class="form-group url-input-wrap">
                 <label for="source_urls">Source Page URL(s)</label>
-                <textarea class="form-control" id="source_urls" name="source_urls" placeholder="Enter one URL per line" rows="4" required></textarea>
+                <textarea class="form-control url-list-textarea" id="source_urls" name="source_urls" placeholder="Enter one URL per line" rows="4" required></textarea>
             </div>
-            <div class="form-group">
+            <div class="form-group url-input-wrap">
                 <label for="wp_url">Destination WordPress URL</label>
                 <input type="url" class="form-control" id="wp_url" name="wp_url" placeholder="https://yourwordpresssite.com" required>
             </div>
-            <div class="form-group">
+            <div class="form-group url-input-wrap">
                 <label for="wp_user">WordPress Admin/Editor Username</label>
                 <input type="text" class="form-control" id="wp_user" name="wp_user" required>
             </div>
-            <div class="form-group">
+            <div class="form-group url-input-wrap">
                 <label for="wp_pass">WordPress Password</label>
                 <input type="password" class="form-control" id="wp_pass" name="wp_pass" required>
             </div>
-            <div class="form-group">
+            <div class="form-group url-input-wrap">
                 <label for="migrate_type">Migrate as</label>
                 <select class="form-control" id="migrate_type" name="migrate_type">
                     <option value="page">Page</option>
                     <option value="post">Post</option>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group url-input-wrap">
                 <label><input type="checkbox" name="featured_image" value="1"> Use hero/banner image as featured image</label>
             </div>
-            <div class="form-group">
+            <div class="form-group url-input-wrap">
                 <label for="gravity_version">Gravity Forms Version (if forms detected)</label>
-                <input type="text" class="form-control" id="gravity_version" name="gravity_version" placeholder="e.g. 2.7" >
+                <input type="text" class="form-control" id="gravity_version" name="gravity_version" placeholder="e.g. 2.7" value="2.9.0.4">
             </div>
-            <button type="submit" class="btn btn-primary">Migrate</button>
+            <button type="submit" class="btn btn-primary btn-large">Migrate</button>
         </form>
+        </div>  
+        </div>
         <div class="progress-log" id="progress-log">
             {% if progress_log %}
                 {% for line in progress_log %}
