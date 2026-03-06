@@ -1,6 +1,7 @@
 
 import os
 import requests
+import re
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash
 
 from extract import extract_main_content, extract_hero_image, extract_forms
