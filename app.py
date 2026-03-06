@@ -26,7 +26,8 @@ def log_progress(msg):
 def migrate_content(form):
     try:
         log_progress('Starting migration...')
-        source_urls = [u.strip() for u in form['source_urls'].split(',') if u.strip()]
+        # Split URLs by line, not comma
+        source_urls = [u.strip() for u in re.split(r'[\r\n]+', form['source_urls']) if u.strip()]
         wp_url = form['wp_url']
         wp_user = form['wp_user']
         wp_pass = form['wp_pass']
@@ -73,6 +74,7 @@ def migrate_content(form):
             log_progress(f'Found {len(media_links)} media files.')
             # Download and upload media
             media_ids = {}
+            media_urls = {}  # map original media URL to new WP URL
             for m_url in media_links:
                 log_progress(f'Downloading media: {m_url}')
                 m_resp = requests.get(m_url, headers=headers)
@@ -87,15 +89,38 @@ def migrate_content(form):
                             log_progress(f'Upload timed out for: {m_url} (skipped)')
                             continue
                         media_ids[m_url] = media['id']
-                        log_progress(f'Uploaded to WordPress media library: {media.get("source_url") or "(unknown)"}')
+                        new_url = media.get('source_url')
+                        if new_url:
+                            media_urls[m_url] = new_url
+                        log_progress(f'Uploaded to WordPress media library: {new_url or "(unknown)"}')
             # Featured image
             featured_id = None
             if hero_img_url and hero_img_url in media_ids:
                 featured_id = media_ids[hero_img_url]
                 log_progress('Set featured image.')
+            # Replace <a> tags for PDFs/images with new WP URLs, retain <a> for webpages
+            from bs4 import BeautifulSoup
+            soup_content = BeautifulSoup(main_content, 'html.parser')
+            for a in soup_content.find_all('a'):
+                href = a.get('href')
+                if href:
+                    # If this link was imported as media, replace href
+                    for orig_url, new_url in media_urls.items():
+                        if href == orig_url:
+                            a['href'] = new_url
+                            break
+                    # Remove class and style from <a>
+                    a.attrs = {k: v for k, v in a.attrs.items() if k not in ['class', 'style']}
+            # Remove inline styles from all tags
+            for tag in soup_content.find_all(True):
+                if 'style' in tag.attrs:
+                    del tag.attrs['style']
+                if 'class' in tag.attrs:
+                    del tag.attrs['class']
+            main_content_clean = str(soup_content)
             # Create post/page with extracted title
             title = page_title or (url.split('//')[-1].split('/')[1] if '/' in url.split('//')[-1] else url)
-            wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content, migrate_type, featured_id)
+            wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content_clean, migrate_type, featured_id)
             log_progress(f'Created {migrate_type}: {wp_post.get("link") or "(no link)"}')
             # Forms
             forms = extract_forms(html)
