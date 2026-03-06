@@ -19,18 +19,23 @@ def create_wordpress_post(site_url, username, password, title, content, post_typ
 def upload_media(site_url, username, password, file_path, mime_type):
     clean_url = site_url.replace('/wp-admin', '').rstrip('/')
     api_url = f"{clean_url}/wp-json/wp/v2/media"
+    import requests
+    from requests.exceptions import Timeout
     with open(file_path, 'rb') as f:
         filename = file_path.split('/')[-1]
         headers = {
             'Content-Disposition': f'attachment; filename={filename}',
             'Content-Type': mime_type
         }
-        resp = requests.post(
-            api_url,
-            headers=headers,
-            data=f,
-            auth=HTTPBasicAuth(username, password),
-            timeout=120
-        )
-        resp.raise_for_status()
-        return resp.json()
+        try:
+            resp = requests.post(
+                api_url,
+                headers=headers,
+                data=f,
+                auth=HTTPBasicAuth(username, password),
+                timeout=120
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except Timeout:
+            return {'timeout': True}

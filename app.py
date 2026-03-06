@@ -83,6 +83,9 @@ def migrate_content(form):
                         tmp.write(m_resp.content)
                         tmp.flush()
                         media = upload_media(wp_url, wp_user, wp_pass, tmp.name, mime)
+                        if media.get('timeout'):
+                            log_progress(f'Upload timed out for: {m_url} (skipped)')
+                            continue
                         media_ids[m_url] = media['id']
                         log_progress(f'Uploaded to WordPress media library: {media.get("source_url") or "(unknown)"}')
             # Featured image

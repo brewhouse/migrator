@@ -44,7 +44,7 @@
       </div>
        
       <div class="landing-card">
-        <form method="post" action="/">
+        <form method="post" action="/" onsubmit="setTimeout(function(){document.getElementById('progress-log').scrollIntoView({behavior:'smooth'});}, 100);">
             <div class="form-group url-input-wrap">
                 <label for="source_urls">Source Page URL(s)</label>
                 <textarea class="form-control url-list-textarea" id="source_urls" name="source_urls" placeholder="Enter one URL per line" rows="4" required></textarea>
