@@ -5,6 +5,7 @@ import re
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash
 from werkzeug.utils import secure_filename
 from docx_extract import extract_docx_content
+from pdf_extract import extract_pdf_content
 
 from extract import extract_main_content, extract_hero_image, extract_forms
 from wordpress_api import create_wordpress_post, upload_media
@@ -30,7 +31,7 @@ def migrate_content(form):
         log_progress('Starting migration...')
         # Split URLs by line, not comma
         source_urls = [u.strip() for u in re.split(r'[\r\n]+', form.get('source_urls', '')) if u.strip()]
-        docx_file = form.get('docx_file')
+        upload_file = form.get('upload_file')
         wp_url = form['wp_url']
         wp_user = form['wp_user']
         wp_pass = form['wp_pass']
@@ -130,18 +131,25 @@ def migrate_content(form):
                     del tag.attrs['style']
                 if 'class' in tag.attrs:
                     del tag.attrs['class']
-            if docx_file:
-                # Handle uploaded docx file
-                filename = secure_filename(docx_file.filename)
+            if upload_file:
+                filename = secure_filename(upload_file.filename)
                 temp_path = os.path.join(tempfile.gettempdir(), filename)
-                docx_file.save(temp_path)
-                html = extract_docx_content(temp_path)
+                upload_file.save(temp_path)
+                if filename.lower().endswith('.docx'):
+                    html = extract_docx_content(temp_path)
+                    filetype = 'Word document'
+                elif filename.lower().endswith('.pdf'):
+                    html = extract_pdf_content(temp_path)
+                    filetype = 'PDF document'
+                else:
+                    log_progress('Unsupported file type uploaded.')
+                    return
                 from extract import extract_main_content
                 page_title, main_content = extract_main_content(html)
                 main_content_clean = main_content
                 title = page_title or filename
                 wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content_clean, migrate_type, None)
-                log_progress(f'Created {migrate_type} from Word document: {wp_post.get("link") or "(no link)"}')
+                log_progress(f'Created {migrate_type} from {filetype}: {wp_post.get("link") or "(no link)"}')
             else:
                 for url in source_urls:
                     log_progress(f'Fetching {url}...')
