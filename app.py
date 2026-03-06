@@ -38,10 +38,37 @@ def migrate_content(form):
             resp = requests.get(url, headers=headers)
             resp.raise_for_status()
             html = resp.text
-            page_title, main_content = extract_main_content(html)
+            # Get main content as soup and as blocks
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html, 'html.parser')
+            # Remove header/footer/nav as in extract_main_content
+            for tag in soup(['header', 'footer', 'nav', 'aside', 'menu']):
+                tag.decompose()
+            for tag in soup.find_all(['div', 'section'], class_=re.compile(r'(side|nav|menu|left)', re.I)):
+                tag.decompose()
+            for tag in soup.find_all(['div', 'section'], id=re.compile(r'(side|nav|menu|left)', re.I)):
+                tag.decompose()
+            main = soup.find('main')
+            content = None
+            if main:
+                content = main
+            else:
+                divs = soup.find_all('div')
+                if divs:
+                    main_div = max(divs, key=lambda d: len(d.get_text(strip=True)))
+                    content = main_div
+                else:
+                    body = soup.find('body')
+                    content = body if body else soup
+            # Remove all <div> tags but keep their content
+            for div in content.find_all('div'):
+                div.unwrap()
+            # Now extract blocks and media from this content only
+            from extract import extract_main_content, extract_media_links_from_content
+            page_title, main_content = extract_main_content(str(content))
             log_progress('Extracted main content.')
             hero_img_url = extract_hero_image(html, url) if featured_image else None
-            media_links = extract_media_links(html, url)
+            media_links = extract_media_links_from_content(content, url)
             log_progress(f'Found {len(media_links)} media files.')
             # Download and upload media
             media_ids = {}

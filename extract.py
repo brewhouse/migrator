@@ -83,10 +83,9 @@ def extract_hero_image(html, base_url):
         return urljoin(base_url, img['src'])
     return None
 
-def extract_media_links(html, base_url):
-    soup = BeautifulSoup(html, 'html.parser')
+def extract_media_links_from_content(content, base_url):
     media = set()
-    for tag in soup.find_all(['img', 'a']):
+    for tag in content.find_all(['img', 'a']):
         if tag.name == 'img' and tag.get('src'):
             src = urljoin(base_url, tag['src'])
             media.add(src)
