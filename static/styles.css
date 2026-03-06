@@ -1,0 +1,54 @@
+/* Planeteria styles (copied from templates/styles.css) */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary:        #3182CE;
+  --primary-dark:   #074F8B;
+  --primary-light:  #EBF8FF;
+  --accent:         #107DC2;
+  --accent-grad:    #63CAE2;
+  --dark:           #1A202C;
+  --charcoal:       #2D3748;
+  --gray-600:       #4A5568;
+  --gray-500:       #718096;
+  --gray-300:       #CBD5E0;
+  --gray-200:       #EDF2F7;
+  --gray-100:       #F7FAFC;
+  --border:         #E2E8F0;
+  --white:          #FFFFFF;
+  --btn-dark:       #32373c;
+  --btn-dark-hover: #1A1D20;
+  --danger:         #E53E3E;
+  --danger-light:   #FFF5F5;
+  --orange:         #DD6B20;
+  --orange-light:   #FFFAF0;
+  --warning:        #D69E2E;
+  --warning-light:  #FEFCBF;
+  --blue:           #3182CE;
+  --blue-light:     #EBF8FF;
+  --radius:         4px;
+  --radius-md:      6px;
+  --shadow-sm:      0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.1);
+}
+.logo-img {
+  display: block;
+  margin: 0 auto 1.5rem auto;
+  width: 180px;
+}
+.container {
+  max-width: 700px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #0001;
+  padding: 2rem;
+}
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+}
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
