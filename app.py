@@ -1,3 +1,11 @@
+# Route to download Gravity Forms JSON export
+from flask import abort
+@app.route('/download-form-json')
+def download_form_json():
+    path = request.args.get('path')
+    if not path or not os.path.isfile(path):
+        return abort(404)
+    return send_file(path, as_attachment=True, download_name=os.path.basename(path), mimetype='application/json')
 
 
 import os
@@ -8,7 +16,7 @@ from werkzeug.utils import secure_filename
 from docx_extract import extract_docx_content
 from pdf_extract import extract_pdf_content
 
-from extract import extract_main_content, extract_hero_image, extract_forms
+from extract import extract_main_content, extract_hero_image, extract_forms, extract_media_links_from_content
 from wordpress_api import create_wordpress_post, upload_media
 from gravity_form import gravity_form_to_json
 import tempfile
@@ -133,7 +141,7 @@ def migrate_content(form):
                 temp_json_path = os.path.join(tempfile.gettempdir(), f'gravity_form_{int(time.time())}.json')
                 with open(temp_json_path, 'w') as f:
                     f.write(gf_json)
-                log_progress(f'Gravity Form detected and exported. Download: /download-form-json?path={temp_json_path}')
+                log_progress(f'Gravity Form detected and exported. <a href=\"/download-form-json?path={temp_json_path}\" target=\"_blank\">Download JSON</a>')
             hero_img_url = extract_hero_image(html, url) if featured_image else None
             media_links = extract_media_links_from_content(content, url)
             log_progress(f'Found {len(media_links)} media files.')
