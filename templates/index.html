@@ -86,7 +86,7 @@
         <div class="progress-log" id="progress-log">
             {% if progress_log %}
                 {% for line in progress_log %}
-                    {{ line }}<br>
+                    {{ line|safe }}<br>
                 {% endfor %}
             {% else %}
                 <span>Progress will appear here...</span>
