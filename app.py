@@ -193,4 +193,3 @@ def migrate_content(form):
                 log_progress('Migration complete!')
             except Exception as e:
                 log_progress(f'Error: {str(e)}')
-        log_progress('Migration complete!')
