@@ -1,11 +1,3 @@
-# Route to download Gravity Forms JSON export
-from flask import abort
-@app.route('/download-form-json')
-def download_form_json():
-    path = request.args.get('path')
-    if not path or not os.path.isfile(path):
-        return abort(404)
-    return send_file(path, as_attachment=True, download_name=os.path.basename(path), mimetype='application/json')
 
 
 import os
@@ -26,6 +18,15 @@ import time
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'changeme')
+
+# Route to download Gravity Forms JSON export
+from flask import abort
+@app.route('/download-form-json')
+def download_form_json():
+    path = request.args.get('path')
+    if not path or not os.path.isfile(path):
+        return abort(404)
+    return send_file(path, as_attachment=True, download_name=os.path.basename(path), mimetype='application/json')
 
 # In-memory progress log (per session)
 progress_log = []
