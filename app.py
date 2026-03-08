@@ -63,6 +63,7 @@ def migrate_content(form):
         featured_image = 'featured_image' in form
         gravity_version = form.get('gravity_version', '2.7')
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+        parent_div_class = form.get('parent_div_class', '').strip()
 
         # --- Handle file upload (Word/PDF) first ---
         if upload_file:
@@ -119,18 +120,24 @@ def migrate_content(form):
                 tag.decompose()
             for tag in soup.find_all(['div', 'section'], id=re.compile(r'(side|nav|menu|left|breadcrumb)', re.I)):
                 tag.decompose()
-            main = soup.find('main')
             content = None
-            if main:
-                content = main
-            else:
-                divs = soup.find_all('div')
-                if divs:
-                    main_div = max(divs, key=lambda d: len(d.get_text(strip=True)))
-                    content = main_div
+            if parent_div_class:
+                # Use the first div with the specified class
+                content = soup.find('div', class_=parent_div_class)
+                if not content:
+                    log_progress(f'Warning: No div with class "{parent_div_class}" found. Falling back to default extraction.')
+            if not content:
+                main = soup.find('main')
+                if main:
+                    content = main
                 else:
-                    body = soup.find('body')
-                    content = body if body else soup
+                    divs = soup.find_all('div')
+                    if divs:
+                        main_div = max(divs, key=lambda d: len(d.get_text(strip=True)))
+                        content = main_div
+                    else:
+                        body = soup.find('body')
+                        content = body if body else soup
             for div in content.find_all('div'):
                 div.unwrap()
             page_title, main_content = extract_main_content(str(content))
