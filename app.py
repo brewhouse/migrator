@@ -62,7 +62,12 @@ def migrate_content(form):
         migrate_type = form['migrate_type']
         featured_image = 'featured_image' in form
         gravity_version = form.get('gravity_version', '2.7')
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Connection': 'keep-alive',
+        }
         parent_div_class = form.get('parent_div_class', '').strip()
 
         # --- Handle file upload (Word/PDF) first ---
