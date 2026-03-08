@@ -70,6 +70,8 @@ def migrate_content(form):
             'Connection': 'keep-alive',
         }
         parent_div_class = form.get('parent_div_class', '').strip()
+        if parent_div_class:
+            log_progress(f'Looking for parent DIV class: [{parent_div_class}] (len={len(parent_div_class)})')
 
         # --- Handle file upload (Word/PDF) first ---
         if upload_file:
@@ -130,6 +132,9 @@ def migrate_content(form):
             if not html.strip():
                 log_progress(f'Warning: Empty response received from {url}. The site may be blocking automated access.')
                 continue
+            log_progress(f'HTML length: {len(html)}')
+            if parent_div_class:
+                log_progress(f'Class in raw HTML: {parent_div_class in html}')
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(html, 'html.parser')
             for tag in soup(['header', 'footer', 'nav', 'aside', 'menu']):
