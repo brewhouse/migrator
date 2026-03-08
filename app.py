@@ -64,8 +64,9 @@ def migrate_content(form):
         gravity_version = form.get('gravity_version', '2.7')
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'identity',
             'Connection': 'keep-alive',
         }
         parent_div_class = form.get('parent_div_class', '').strip()
@@ -113,14 +114,22 @@ def migrate_content(form):
             try:
                 session = requests.Session()
                 resp = session.get(url, headers=headers, timeout=30, allow_redirects=True)
-                log_progress(f'HTTP status: {resp.status_code}')
-                log_progress(f'HTTP headers: {dict(resp.headers)}')
                 resp.raise_for_status()
             except Exception as e:
                 log_progress(f'Error fetching {url}: {str(e)}')
                 continue
-            html = resp.text
-            log_progress('Fetched HTML preview: ' + html[:1000].replace('\n', ' ') + (' ...' if len(html) > 1000 else ''))
+            # Handle gzip encoding explicitly if requests didn't decompress
+            import gzip as gziplib
+            if resp.headers.get('Content-Encoding', '') == 'gzip':
+                try:
+                    html = gziplib.decompress(resp.content).decode('utf-8', errors='replace')
+                except Exception:
+                    html = resp.text
+            else:
+                html = resp.text
+            if not html.strip():
+                log_progress(f'Warning: Empty response received from {url}. The site may be blocking automated access.')
+                continue
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(html, 'html.parser')
             for tag in soup(['header', 'footer', 'nav', 'aside', 'menu']):
