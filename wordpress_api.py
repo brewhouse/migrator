@@ -4,7 +4,13 @@ from requests.auth import HTTPBasicAuth
 def create_wordpress_post(site_url, username, password, title, content, post_type='page', featured_image_id=None):
     # Ensure /wp-admin/ is not in the site_url
     clean_url = site_url.replace('/wp-admin', '').rstrip('/')
-    api_url = f"{clean_url}/wp-json/wp/v2/{post_type}s"
+    # Use correct endpoint for page/post
+    if post_type == 'page':
+        api_url = f"{clean_url}/wp-json/wp/v2/pages"
+    elif post_type == 'post':
+        api_url = f"{clean_url}/wp-json/wp/v2/posts"
+    else:
+        api_url = f"{clean_url}/wp-json/wp/v2/{post_type}s"
     data = {
         'title': title,
         'content': content,

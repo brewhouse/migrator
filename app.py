@@ -122,9 +122,17 @@ def migrate_content(form):
                 tag.decompose()
             content = None
             if parent_div_class:
-                # Match any div where the class list contains the specified class, ignoring extra spaces
+                # Match any div where the class list contains the specified class, robust to string/list and extra spaces
                 class_to_match = parent_div_class.strip()
-                divs = soup.find_all('div', class_=lambda c: c and class_to_match in [cls.strip() for cls in c.split()])
+                def class_matcher(c):
+                    if not c:
+                        return False
+                    if isinstance(c, str):
+                        return class_to_match in [cls.strip() for cls in c.split()]
+                    if isinstance(c, list):
+                        return any(class_to_match == cls.strip() for cls in c)
+                    return False
+                divs = soup.find_all('div', class_=class_matcher)
                 if divs:
                     content = divs[0]
                 else:
@@ -210,8 +218,13 @@ def migrate_content(form):
                     del tag.attrs['class']
             main_content_clean = str(soup_content)
             title = page_title or (url.split('//')[-1].split('/')[1] if '/' in url.split('//')[-1] else url)
-            wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content_clean, migrate_type, featured_id)
-            log_progress(f'Created {migrate_type}: {wp_post.get("link") or "(no link)"}')
+            try:
+                wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content_clean, migrate_type, featured_id)
+                log_progress(f'Created {migrate_type}: {wp_post.get("link") or "(no link)"}')
+            except Exception as e:
+                log_progress(f'WordPress API error: {str(e)}')
+                if hasattr(e, "response") and e.response is not None:
+                    log_progress(f'API response: {e.response.text}')
             log_progress('Migration complete!')
 
     except Exception as e:
