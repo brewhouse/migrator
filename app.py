@@ -122,8 +122,9 @@ def migrate_content(form):
                 tag.decompose()
             content = None
             if parent_div_class:
-                # Use regex to match any class in the class attribute, ignoring extra spaces
-                divs = soup.find_all('div', class_=re.compile(r'(^|\s)'+re.escape(parent_div_class.strip())+r'(\s|$)'))
+                # Match any div where the class list contains the specified class, ignoring extra spaces
+                class_to_match = parent_div_class.strip()
+                divs = soup.find_all('div', class_=lambda c: c and class_to_match in [cls.strip() for cls in c.split()])
                 if divs:
                     content = divs[0]
                 else:
