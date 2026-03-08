@@ -122,7 +122,7 @@ def migrate_content(form):
                 tag.decompose()
             content = None
             if parent_div_class:
-                # Match any div where the class list contains the specified class, robust to string/list and extra spaces
+                # Match any tag where the class list contains the specified class, robust to string/list and extra spaces
                 class_to_match = parent_div_class.strip()
                 def class_matcher(c):
                     if not c:
@@ -132,11 +132,11 @@ def migrate_content(form):
                     if isinstance(c, list):
                         return any(class_to_match == cls.strip() for cls in c)
                     return False
-                divs = soup.find_all('div', class_=class_matcher)
-                if divs:
-                    content = divs[0]
+                tags = soup.find_all(class_=class_matcher)
+                if tags:
+                    content = tags[0]
                 else:
-                    log_progress(f'Warning: No div with class "{parent_div_class}" found. Falling back to default extraction.')
+                    log_progress(f'Warning: No element with class "{parent_div_class}" found. Falling back to default extraction.')
             if not content:
                 main = soup.find('main')
                 if main:
@@ -219,6 +219,10 @@ def migrate_content(form):
             main_content_clean = str(soup_content)
             title = page_title or (url.split('//')[-1].split('/')[1] if '/' in url.split('//')[-1] else url)
             try:
+                # Log the API endpoint for debugging
+                from wordpress_api import get_wp_api_url
+                api_url = get_wp_api_url(wp_url, migrate_type)
+                log_progress(f'WordPress API endpoint: {api_url}')
                 wp_post = create_wordpress_post(wp_url, wp_user, wp_pass, title, main_content_clean, migrate_type, featured_id)
                 log_progress(f'Created {migrate_type}: {wp_post.get("link") or "(no link)"}')
             except Exception as e:

@@ -1,3 +1,11 @@
+def get_wp_api_url(site_url, post_type='page'):
+    clean_url = site_url.replace('/wp-admin', '').rstrip('/')
+    if post_type == 'page':
+        return f"{clean_url}/wp-json/wp/v2/pages"
+    elif post_type == 'post':
+        return f"{clean_url}/wp-json/wp/v2/posts"
+    else:
+        return f"{clean_url}/wp-json/wp/v2/{post_type}s"
 import requests
 from requests.auth import HTTPBasicAuth
 
