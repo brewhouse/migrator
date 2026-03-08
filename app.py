@@ -192,30 +192,46 @@ def migrate_content(form):
             log_progress(f'Found {len(media_links)} media files.')
             media_ids = {}
             media_urls = {}
+            MAX_MEDIA_SIZE = 20 * 1024 * 1024  # 20MB limit
             for m_url in media_links:
                 log_progress(f'Downloading media: {m_url}')
+                tmp_path = None
                 try:
-                    m_resp = requests.get(m_url, headers=headers, timeout=30)
+                    m_resp = requests.get(m_url, headers={'User-Agent': headers['User-Agent']}, timeout=(10, 30), stream=True)
                     if m_resp.status_code != 200:
                         log_progress(f'Failed to download media: {m_url} (status {m_resp.status_code})')
                         continue
+                    ext = os.path.splitext(m_url.split('?')[0])[-1] or '.bin'
+                    mime = mimetypes.guess_type(m_url)[0] or 'application/octet-stream'
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+                        tmp_path = tmp.name
+                        downloaded = 0
+                        for chunk in m_resp.iter_content(chunk_size=65536):
+                            if chunk:
+                                downloaded += len(chunk)
+                                if downloaded > MAX_MEDIA_SIZE:
+                                    log_progress(f'Skipping {m_url}: exceeds 20MB limit')
+                                    tmp_path = None
+                                    break
+                                tmp.write(chunk)
                 except Exception as e:
                     log_progress(f'Error downloading media: {m_url} ({str(e)})')
                     continue
-                ext = os.path.splitext(m_url)[-1]
-                mime = mimetypes.guess_type(m_url)[0] or 'application/octet-stream'
-                with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
-                    tmp.write(m_resp.content)
-                    tmp.flush()
-                    media = upload_media(wp_url, wp_user, wp_pass, tmp.name, mime)
+                if not tmp_path:
+                    continue
+                log_progress(f'Download complete, uploading to WordPress...')
+                try:
+                    media = upload_media(wp_url, wp_user, wp_pass, tmp_path, mime)
                     if media.get('timeout'):
                         log_progress(f'Upload timed out for: {m_url} (skipped)')
                         continue
-                    media_ids[m_url] = media['id']
+                    media_ids[m_url] = media.get('id')
                     new_url = media.get('source_url')
                     if new_url:
                         media_urls[m_url] = new_url
                     log_progress(f'Uploaded to WordPress media library: {new_url or "(unknown)"}')
+                except Exception as e:
+                    log_progress(f'Error uploading media: {m_url} ({str(e)})')
             featured_id = None
             if hero_img_url and hero_img_url in media_ids:
                 featured_id = media_ids[hero_img_url]
