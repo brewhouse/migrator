@@ -137,29 +137,32 @@ def migrate_content(form):
                 log_progress(f'Class in raw HTML: {parent_div_class in html}')
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(html, 'html.parser')
-            for tag in soup(['header', 'footer', 'nav', 'aside', 'menu']):
-                tag.decompose()
-            for tag in soup.find_all(['div', 'section'], class_=re.compile(r'(side|nav|menu|left|breadcrumb)', re.I)):
-                tag.decompose()
-            for tag in soup.find_all(['div', 'section'], id=re.compile(r'(side|nav|menu|left|breadcrumb)', re.I)):
-                tag.decompose()
             content = None
             if parent_div_class:
-                # Match any tag where the class list contains the specified class, robust to string/list and extra spaces
+                # Search for parent_div_class BEFORE any decompose operations
                 class_to_match = parent_div_class.strip()
                 def class_matcher(c):
                     if not c:
                         return False
-                    if isinstance(c, str):
-                        return class_to_match in [cls.strip() for cls in c.split()]
                     if isinstance(c, list):
                         return any(class_to_match == cls.strip() for cls in c)
+                    if isinstance(c, str):
+                        return class_to_match in [cls.strip() for cls in c.split()]
                     return False
                 tags = soup.find_all(class_=class_matcher)
                 if tags:
                     content = tags[0]
+                    log_progress(f'Found element with class "{parent_div_class}".')
                 else:
                     log_progress(f'Warning: No element with class "{parent_div_class}" found. Falling back to default extraction.')
+            if not content:
+                # Only decompose nav/header/footer etc when doing default extraction
+                for tag in soup(['header', 'footer', 'nav', 'aside', 'menu']):
+                    tag.decompose()
+                for tag in soup.find_all(['div', 'section'], class_=re.compile(r'(side|nav|menu|left|breadcrumb)', re.I)):
+                    tag.decompose()
+                for tag in soup.find_all(['div', 'section'], id=re.compile(r'(side|nav|menu|left|breadcrumb)', re.I)):
+                    tag.decompose()
             if not content:
                 main = soup.find('main')
                 if main:
