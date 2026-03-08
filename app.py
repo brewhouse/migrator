@@ -117,6 +117,7 @@ def migrate_content(form):
                 log_progress(f'Error fetching {url}: {str(e)}')
                 continue
             html = resp.text
+            log_progress('Fetched HTML preview: ' + html[:1000].replace('\n', ' ') + (' ...' if len(html) > 1000 else ''))
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(html, 'html.parser')
             for tag in soup(['header', 'footer', 'nav', 'aside', 'menu']):
