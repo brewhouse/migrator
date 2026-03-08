@@ -111,7 +111,10 @@ def migrate_content(form):
         for url in source_urls:
             log_progress(f'Fetching {url}...')
             try:
-                resp = requests.get(url, headers=headers, timeout=30)
+                session = requests.Session()
+                resp = session.get(url, headers=headers, timeout=30, allow_redirects=True)
+                log_progress(f'HTTP status: {resp.status_code}')
+                log_progress(f'HTTP headers: {dict(resp.headers)}')
                 resp.raise_for_status()
             except Exception as e:
                 log_progress(f'Error fetching {url}: {str(e)}')
