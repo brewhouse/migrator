@@ -122,9 +122,11 @@ def migrate_content(form):
                 tag.decompose()
             content = None
             if parent_div_class:
-                # Use the first div with the specified class
-                content = soup.find('div', class_=parent_div_class)
-                if not content:
+                # Use regex to match any class in the class attribute, ignoring extra spaces
+                divs = soup.find_all('div', class_=re.compile(r'(^|\s)'+re.escape(parent_div_class.strip())+r'(\s|$)'))
+                if divs:
+                    content = divs[0]
+                else:
                     log_progress(f'Warning: No div with class "{parent_div_class}" found. Falling back to default extraction.')
             if not content:
                 main = soup.find('main')

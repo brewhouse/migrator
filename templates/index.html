@@ -45,13 +45,13 @@
        
       <div class="landing-card">
         <form method="post" action="/" enctype="multipart/form-data" onsubmit="setTimeout(function(){document.getElementById('progress-log').scrollIntoView({behavior:'smooth'});}, 100);">
-                        <div class="form-group url-input-wrap">
-                            <label for="parent_div_class">Optional: Parent DIV class to extract content from</label>
-                            <input type="text" class="form-control" id="parent_div_class" name="parent_div_class" placeholder="e.g. main-content">
-                        </div>
             <div class="form-group url-input-wrap">
                 <label for="source_urls">Source Page URL(s)</label>
                 <textarea class="form-control url-list-textarea" id="source_urls" name="source_urls" placeholder="Enter one URL per line" rows="4"></textarea>
+            </div>
+            <div class="form-group url-input-wrap">
+                <label for="parent_div_class">Optional: Parent DIV class to extract content from</label>
+                <input type="text" class="form-control" id="parent_div_class" name="parent_div_class" placeholder="e.g. main-content">
             </div>
             <div class="form-group url-input-wrap">
                 <label for="upload_file">Or upload a Word (.docx) or PDF (.pdf) file</label>
